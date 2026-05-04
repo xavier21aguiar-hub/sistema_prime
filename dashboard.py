@@ -155,4 +155,63 @@ if not df.empty:
     st.subheader("📋 Historial")
     st.dataframe(df.tail(10))
 
+    st.subheader("🏆 Logros")
+
+logros = []
+
+# ===== LOGROS DE RACHA GYM =====
+if streak >= 3:
+    logros.append("🥉 3 días seguidos en el gym")
+if streak >= 7:
+    logros.append("🥈 7 días seguidos en el gym")
+if streak >= 15:
+    logros.append("🥇 15 días seguidos en el gym")
+
+# ===== LOGROS DE LECTURA =====
+lectura_streak = 0
+for val in reversed(df["leer"]):
+    if val == 1:
+        lectura_streak += 1
+    else:
+        break
+
+if lectura_streak >= 5:
+    logros.append("📚 5 días seguidos leyendo")
+
+# ===== LOGROS DE APRENDIZAJE =====
+apr_streak = 0
+for val in reversed(df["aprendizaje"]):
+    if val == 1:
+        apr_streak += 1
+    else:
+        break
+
+if apr_streak >= 5:
+    logros.append("🧠 5 días seguidos aprendiendo")
+
+# ===== LOGROS DE CONTROL DE PANTALLA =====
+if len(df) >= 3:
+    ultimos = df.tail(3)
+    if ultimos["horas_pantalla"].mean() < 4:
+        logros.append("📵 Control total: bajo uso de pantalla 3 días")
+
+# ===== LOGROS DE ESTADO MENTAL =====
+if len(df) >= 3:
+    ultimos = df.tail(3)
+    if all(ultimos["estado_mental"] >= 8):
+        logros.append("😎 Mente fuerte: 3 días con alto estado mental")
+
+# ===== LOGROS DE XP =====
+if xp_total >= 500:
+    logros.append("🚀 500 XP alcanzados")
+if xp_total >= 1000:
+    logros.append("🔥 1000 XP alcanzados")
+
+# ===== MOSTRAR =====
+if logros:
+    for logro in logros:
+        st.success(logro)
+else:
+    st.info("Aún no desbloqueas logros… sigue avanzando 😈")
+
 conn.close()
