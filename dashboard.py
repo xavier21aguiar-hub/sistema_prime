@@ -54,12 +54,104 @@ if not df.empty:
     df["fecha"] = pd.to_datetime(df["fecha"])
     df = df.sort_values("fecha")
 
-    st.subheader("📊 Métricas")
+    # ===== XP SYSTEM =====
+    def calcular_puntos(row):
+        puntos = 0
 
-    st.metric("Gym %", f"{df['gym'].mean()*100:.1f}%")
-    st.metric("Lectura %", f"{df['leer'].mean()*100:.1f}%")
-    st.metric("Estado mental", f"{df['estado_mental'].mean():.1f}")
+        if row["leer"] == 1:
+            puntos += 10
+        if row["gym"] == 1:
+            puntos += 20
+        if row["aprendizaje"] == 1:
+            puntos += 15
 
+        if row["horas_pantalla"] < 4:
+            puntos += 10
+        if row["estado_mental"] >= 8:
+            puntos += 10
+
+        return puntos
+
+    df["xp"] = df.apply(calcular_puntos, axis=1)
+    xp_total = df["xp"].sum()
+
+    def calcular_nivel(xp_total):
+        return int(xp_total // 100)
+
+    nivel = calcular_nivel(xp_total)
+
+    # ===== RACHA =====
+    streak = 0
+    for val in reversed(df["gym"]):
+        if val == 1:
+            streak += 1
+        else:
+            break
+
+    # ===== UI =====
+    st.subheader("🎮 Progreso Gamer")
+
+    col1, col2 = st.columns(2)
+    col1.metric("Nivel", nivel)
+    col2.metric("XP total", xp_total)
+
+    st.metric("🔥 Racha Gym", streak)
+
+    xp_actual = xp_total % 100
+    st.progress(xp_actual / 100)
+    st.write(f"XP para siguiente nivel: {100 - xp_actual}")
+
+    # ===== MISIONES =====
+    st.subheader("🎯 Misiones del día")
+
+    ultimo = df.iloc[-1]
+
+    misiones = []
+
+    # Misión 1
+    if ultimo["leer"] == 1:
+        misiones.append(("📚 Leer", True, 10))
+    else:
+        misiones.append(("📚 Leer", False, 0))
+
+    # Misión 2
+    if ultimo["gym"] == 1:
+        misiones.append(("🏋️ Gym", True, 20))
+    else:
+        misiones.append(("🏋️ Gym", False, 0))
+
+    # Misión 3
+    if ultimo["aprendizaje"] == 1:
+        misiones.append(("🧠 Aprender", True, 15))
+    else:
+        misiones.append(("🧠 Aprender", False, 0))
+
+    # Misión 4
+    if ultimo["horas_pantalla"] < 4:
+        misiones.append(("📵 Menos de 4h pantalla", True, 10))
+    else:
+        misiones.append(("📵 Control pantalla", False, -5))
+
+    # Misión 5
+    if ultimo["estado_mental"] >= 8:
+        misiones.append(("😎 Estado mental alto", True, 10))
+    else:
+        misiones.append(("😴 Mejora tu estado", False, 0))
+
+    # Mostrar misiones
+    xp_misiones = 0
+
+    for nombre, estado, recompensa in misiones:
+        if estado:
+            st.success(f"{nombre} ✔ (+{recompensa} XP)")
+            xp_misiones += recompensa
+        else:
+            st.error(f"{nombre} ✖")
+
+    st.subheader("💥 Bonus del día")
+    st.write(f"XP ganado por misiones: {xp_misiones}")
+
+    # ===== HISTORIAL =====
     st.subheader("📋 Historial")
     st.dataframe(df.tail(10))
 
