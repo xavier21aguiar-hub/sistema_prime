@@ -25,34 +25,38 @@ CREATE TABLE IF NOT EXISTS progreso (
 conn.commit()
 
 # ===== FORMULARIO =====
-st.subheader("📥 Registrar día")
+col1, col2 = st.columns([1,1])
 
-with st.form("registro"):
-    leer = st.selectbox("¿Leíste?", [1, 0])
-    gym = st.selectbox("¿Fuiste al gym?", [1, 0])
-    aprendizaje = st.selectbox("¿Aprendiste algo?", [1, 0])
-    horas = st.number_input("Horas pantalla", 0.0, 24.0, 4.0)
-    estado = st.slider("Estado mental", 1, 10, 7)
+with col1:
+    st.subheader("📥 Registrar día")
+    
+    with st.form("registro"):
+        leer = st.selectbox("¿Leíste?", [1, 0])
+        gym = st.selectbox("¿Fuiste al gym?", [1, 0])
+        aprendizaje = st.selectbox("¿Aprendiste algo?", [1, 0])
+        horas = st.number_input("Horas pantalla", 0.0, 24.0, 4.0)
+        estado = st.slider("Estado mental", 1, 10, 7)
 
-    submit = st.form_submit_button("Guardar")
+        submit = st.form_submit_button("Guardar")
+        
+        if submit:
+            hoy = datetime.now().strftime("%Y-%m-%d")
 
-    if submit:
-        hoy = datetime.now().strftime("%Y-%m-%d")
-
-        cursor.execute("""
-        INSERT OR REPLACE INTO progreso 
-        VALUES (?, ?, ?, ?, ?, ?)
-        """, (hoy, leer, gym, aprendizaje, horas, estado))
-
-        conn.commit()
-        st.success("✅ Guardado")
+            cursor.execute("""
+            INSERT OR REPLACE INTO progreso 
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (hoy, leer, gym, aprendizaje, horas, estado))
+            
+            conn.commit()
+            st.success("✅ Guardado")
 
 # ===== DATOS =====
 df = pd.read_sql_query("SELECT * FROM progreso", conn)
 
 if not df.empty:
-    df["fecha"] = pd.to_datetime(df["fecha"])
-    df = df.sort_values("fecha")
+    with col2:
+        df["fecha"] = pd.to_datetime(df["fecha"])
+        df = df.sort_values("fecha")
 
     # ===== XP SYSTEM =====
     def calcular_puntos(row):
@@ -159,7 +163,7 @@ if not df.empty:
 
     logros = []
 
-        # ===== LOGROS DE RACHA GYM =====
+    # ===== LOGROS DE RACHA GYM =====
     if streak >= 3:
         logros.append("🥉 3 días seguidos en el gym")
     if streak >= 7:
