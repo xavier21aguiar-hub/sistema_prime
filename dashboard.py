@@ -166,23 +166,23 @@ if streak >= 15:
     logros.append("🥇 15 días seguidos en el gym")
 
 # ===== LOGROS DE LECTURA =====
-    lectura_streak = 0
-    for val in reversed(df["leer"]):
-        if val == 1:
-            lectura_streak += 1
-        else:
-            break
+lectura_streak = 0
+for val in reversed(df["leer"]):
+    if val == 1:
+        lectura_streak += 1
+    else:
+        break
 
-    if lectura_streak >= 5:
-        logros.append("📚 5 días seguidos leyendo")
+if lectura_streak >= 5:
+    logros.append("📚 5 días seguidos leyendo")
 
-    # ===== LOGROS DE APRENDIZAJE =====
-    apr_streak = 0
-    for val in reversed(df["aprendizaje"]):
-        if val == 1:
-            apr_streak += 1
-        else:
-            break
+# ===== LOGROS DE APRENDIZAJE =====
+apr_streak = 0
+for val in reversed(df["aprendizaje"]):
+    if val == 1:
+        apr_streak += 1
+    else:
+        break
 
     if apr_streak >= 5:
         logros.append("🧠 5 días seguidos aprendiendo")
