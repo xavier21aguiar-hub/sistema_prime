@@ -21,12 +21,12 @@ CREATE TABLE IF NOT EXISTS progreso (
     estado_mental INTEGER
 )
 """)
-
 conn.commit()
 
-# ===== FORMULARIO =====
+# ===== LAYOUT PRINCIPAL =====
 col1, col2 = st.columns([1,1])
 
+# ===== FORMULARIO =====
 with col1:
     st.subheader("📥 Registrar día")
     
@@ -37,9 +37,8 @@ with col1:
         horas = st.number_input("Horas pantalla", 0.0, 24.0, 4.0)
         estado = st.slider("Estado mental", 1, 10, 7)
 
-        submit = st.form_submit_button("Guardar")
-        
-        if submit:
+        if st.form_submit_button("Guardar"):
+
             hoy = datetime.now().strftime("%Y-%m-%d")
 
             cursor.execute("""
@@ -53,51 +52,45 @@ with col1:
 # ===== DATOS =====
 df = pd.read_sql_query("SELECT * FROM progreso", conn)
 
-if not df.empty:
-    with col2:
-        df["fecha"] = pd.to_datetime(df["fecha"])
-        df = df.sort_values("fecha")
+if df.empty:
+    st.warning("⚠️ Aún no tienes registros")
+    conn.close()
+    st.stop()
 
-    # ===== XP SYSTEM =====
-    def calcular_puntos(row):
+# ===== LIMPIEZA =====
+df["fecha"] = pd.to_datetime(df["fecha"])
+df = df.sort_values("fecha")
+
+# ===== XP SYSTEM =====
+def calcular_puntos(row):
         puntos = 0
-
-        if row["leer"] == 1:
-            puntos += 10
-        if row["gym"] == 1:
-            puntos += 20
-        if row["aprendizaje"] == 1:
-            puntos += 15
-
-        if row["horas_pantalla"] < 4:
-            puntos += 10
-        if row["estado_mental"] >= 8:
-            puntos += 10
-
+        if row["leer"]: puntos += 10
+        if row["gym"]: puntos += 20
+        if row["aprendizaje"]: puntos += 15
+        if row["horas_pantalla"] < 4: puntos += 10
+        if row["estado_mental"] >= 8: puntos += 10
         return puntos
 
-    df["xp"] = df.apply(calcular_puntos, axis=1)
-    xp_total = df["xp"].sum()
+df["xp"] = df.apply(calcular_puntos, axis=1)
+xp_total = df["xp"].sum()
+nivel = int(xp_total // 100)
 
-    def calcular_nivel(xp_total):
-        return int(xp_total // 100)
+# ===== RACHA =====
+streak = 0
+for val in reversed(df["gym"]):
+    if val == 1:
+        streak += 1
+    else:
+        break
 
-    nivel = calcular_nivel(xp_total)
-
-    # ===== RACHA =====
-    streak = 0
-    for val in reversed(df["gym"]):
-        if val == 1:
-            streak += 1
-        else:
-            break
-
-    # ===== UI =====
+# ===== UI =====
+with col_dash:
+        
     st.subheader("🎮 Progreso Gamer")
 
-    col1, col2 = st.columns(2)
-    col1.metric("Nivel", nivel)
-    col2.metric("XP total", xp_total)
+    colA, colB = st.columns(2)
+    colA.metric("Nivel", nivel)
+    colB.metric("XP total", xp_total)
 
     st.metric("🔥 Racha Gym", streak)
 
@@ -155,23 +148,24 @@ if not df.empty:
     st.subheader("💥 Bonus del día")
     st.write(f"XP ganado por misiones: {xp_misiones}")
 
-    # ===== HISTORIAL =====
-    st.subheader("📋 Historial")
-    st.dataframe(df.tail(10))
+# ===== HISTORIAL =====
+st.subheader("📋 Historial")
+st.dataframe(df.tail(10))
 
-    st.subheader("🏆 Logros")
+# ===== LOGROS =====
+st.subheader("🏆 Logros")
 
-    logros = []
+logros = []
 
     # ===== LOGROS DE RACHA GYM =====
-    if streak >= 3:
-        logros.append("🥉 3 días seguidos en el gym")
-    if streak >= 7:
-        logros.append("🥈 7 días seguidos en el gym")
-    if streak >= 15:
-        logros.append("🥇 15 días seguidos en el gym")
+if streak >= 3:
+    logros.append("🥉 3 días seguidos en el gym")
+if streak >= 7:
+    logros.append("🥈 7 días seguidos en el gym")
+if streak >= 15:
+    logros.append("🥇 15 días seguidos en el gym")
 
-    # ===== LOGROS DE LECTURA =====
+# ===== LOGROS DE LECTURA =====
     lectura_streak = 0
     for val in reversed(df["leer"]):
         if val == 1:
