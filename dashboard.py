@@ -84,7 +84,7 @@ for val in reversed(df["gym"]):
         break
 
 # ===== UI =====
-with col_dash:
+with col2:
         
     st.subheader("🎮 Progreso Gamer")
 
