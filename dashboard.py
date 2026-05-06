@@ -31,7 +31,7 @@ with col_form:
         if submit:
             hoy = datetime.now().strftime("%Y-%m-%d")
 
-            supabase.table("progreso").upsert({
+            supabase.table("progreso").insert({
                 "fecha": hoy,
                 "leer": leer,
                 "gym": gym,
