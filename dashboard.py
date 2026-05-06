@@ -91,7 +91,64 @@ with col_dash:
     st.progress(xp_actual / 100)
     st.write(f"XP para siguiente nivel: {100 - xp_actual}")
 
-        # ===== MISIONES =====
+    # ===== OBJETIVOS SEMANALES =====
+    st.subheader("🎯 Objetivos Semanales")
+
+    # Semana actual
+    df["semana"] = df["fecha"].dt.isocalendar().week
+    semana_actual = df["semana"].max()
+
+    semana_df = df[df["semana"] == semana_actual]
+
+    # Conteos
+    gym_semana = int(semana_df["gym"].sum())
+    lectura_semana = int(semana_df["leer"].sum())
+    aprendizaje_semana = int(semana_df["aprendizaje"].sum())
+
+    # Gym
+    st.write("🏋️ Gym")
+    
+    gym_progress = min(gym_semana / 5, 1.0)
+    st.progress(gym_progress)
+    st.write(f"{gym_semana}/5 días")
+
+    #Lectura
+    st.write("📚 Lectura")
+
+    lectura_progress = min(lectura_semana / 5, 1.0)
+    st.progress(lectura_progress)
+    st.write(f"{lectura_semana}/5 dias")
+
+    # Aprendizaje
+    st.write("🧠 Aprendizaje")
+
+    apr_progress = min(aprendizaje_semana /5, 1.0)
+    st.progress(apr_progress)
+    st.write(f"{aprendizaje_semana}/5 dias")
+
+    # ===== BONUS SEMANAL =====
+    st.subheader("💥 Bonus Semanal")
+    bonus = 0
+    
+    if gym_semana >= 5:
+        st.success("🏋️ Gym completado +50 XP")
+        bonus += 50
+
+    if lectura_semana >= 5:
+        st.success("📚 Lectura completada +50 XP")
+        bonus += 50
+        
+    if aprendizaje_semana >= 5:
+        st.success("🧠 Aprendizaje completado +50 XP")
+        bonus += 50
+
+    if bonus == 0:
+        st.info("😈 Completa objetivos para ganar bonus")
+
+    else:
+        st.write(f"🔥 Bonus total: {bonus} XP")
+
+    # ===== MISIONES =====
     st.subheader("🎯 Misiones del día")
 
     ultimo = df.iloc[-1]
@@ -115,6 +172,7 @@ with col_dash:
 
     st.subheader("💥 Bonus del día")
     st.write(f"XP ganado: {xp_misiones}")
+
 
 # ===== IA =====
 st.subheader("🧠 Análisis Inteligente")
@@ -256,5 +314,3 @@ for val in reversed(df["aprendizaje"]):
             st.success(logro)
     else:
         st.info("Aún no desbloqueas logros… sigue avanzando 😈")
-
-
