@@ -1,33 +1,22 @@
-import sqlite3
 import pandas as pd
 import streamlit as st
 from datetime import datetime
+from supabase import create_client
 
+# ===== CONFIG =====
 st.set_page_config(page_title="Sistema Prime", layout="centered")
-
 st.title("🔥 Sistema Prime")
 
-# ===== BASE DE DATOS =====
-conn = sqlite3.connect("prime.db", check_same_thread=False)
-cursor = conn.cursor()
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS progreso (
-    fecha TEXT PRIMARY KEY,
-    leer INTEGER,
-    gym INTEGER,
-    aprendizaje INTEGER,
-    horas_pantalla REAL,
-    estado_mental INTEGER
-)
-""")
-conn.commit()
+# ===== SUPABASE =====
+url = st.secrets["https://kdndotcakiuzjplzqfow.supabase.co/rest/v1/"]
+key = st.secrets["sb_publishable_4ZM3XEybYLT6xq65ll65Mg_0leE_GSW"]
+supabase = create_client(url, key)
 
 # ===== LAYOUT PRINCIPAL =====
-col1, col2 = st.columns([1,1])
+col_form, col_dash = st.columns([1,1])
 
 # ===== FORMULARIO =====
-with col1:
+with col_form:
     st.subheader("📥 Registrar día")
     
     with st.form("registro"):
@@ -37,24 +26,28 @@ with col1:
         horas = st.number_input("Horas pantalla", 0.0, 24.0, 4.0)
         estado = st.slider("Estado mental", 1, 10, 7)
 
-        if st.form_submit_button("Guardar"):
+        submit = st.form_submit_button("Guardar")
 
+        if submit:
             hoy = datetime.now().strftime("%Y-%m-%d")
 
-            cursor.execute("""
-            INSERT OR REPLACE INTO progreso 
-            VALUES (?, ?, ?, ?, ?, ?)
-            """, (hoy, leer, gym, aprendizaje, horas, estado))
-            
-            conn.commit()
-            st.success("✅ Guardado")
+            supabase.table("progreso").upsert({
+                "fecha": hoy,
+                "leer": leer,
+                "gym": gym,
+                "aprendizaje": aprendizaje,
+                "horas_pantalla": horas,
+                "estado_mental": estado
+            }).execute()
+
+            st.success("✅ Guardado en la nube")
 
 # ===== DATOS =====
-df = pd.read_sql_query("SELECT * FROM progreso", conn)
+response = supabase.table("progreso").select("*").execute()
+df = pd.DataFrame(response.data)
 
 if df.empty:
     st.warning("⚠️ Aún no tienes registros")
-    conn.close()
     st.stop()
 
 # ===== LIMPIEZA =====
@@ -84,7 +77,7 @@ for val in reversed(df["gym"]):
         break
 
 # ===== UI =====
-with col2:
+with col_dash:
         
     st.subheader("🎮 Progreso Gamer")
 
@@ -98,59 +91,46 @@ with col2:
     st.progress(xp_actual / 100)
     st.write(f"XP para siguiente nivel: {100 - xp_actual}")
 
-    # ===== MISIONES =====
+        # ===== MISIONES =====
     st.subheader("🎯 Misiones del día")
 
     ultimo = df.iloc[-1]
 
-    misiones = []
+    misiones = [
+        ("📚 Leer", ultimo["leer"], 10),
+        ("🏋️ Gym", ultimo["gym"], 20),
+        ("🧠 Aprender", ultimo["aprendizaje"], 15),
+        ("📵 Control pantalla", ultimo["horas_pantalla"] < 4, 10),
+        ("😎 Estado mental", ultimo["estado_mental"] >= 8, 10),
+    ]
 
-    # Misión 1
-    if ultimo["leer"] == 1:
-        misiones.append(("📚 Leer", True, 10))
-    else:
-        misiones.append(("📚 Leer", False, 0))
-
-    # Misión 2
-    if ultimo["gym"] == 1:
-        misiones.append(("🏋️ Gym", True, 20))
-    else:
-        misiones.append(("🏋️ Gym", False, 0))
-
-    # Misión 3
-    if ultimo["aprendizaje"] == 1:
-        misiones.append(("🧠 Aprender", True, 15))
-    else:
-        misiones.append(("🧠 Aprender", False, 0))
-
-    # Misión 4
-    if ultimo["horas_pantalla"] < 4:
-        misiones.append(("📵 Menos de 4h pantalla", True, 10))
-    else:
-        misiones.append(("📵 Control pantalla", False, -5))
-
-    # Misión 5
-    if ultimo["estado_mental"] >= 8:
-        misiones.append(("😎 Estado mental alto", True, 10))
-    else:
-        misiones.append(("😴 Mejora tu estado", False, 0))
-
-    # Mostrar misiones
     xp_misiones = 0
 
-    for nombre, estado, recompensa in misiones:
-        if estado:
-            st.success(f"{nombre} ✔ (+{recompensa} XP)")
-            xp_misiones += recompensa
+    for nombre, estado_m, xp in misiones:
+        if estado_m:
+            st.success(f"{nombre} ✔ (+{xp} XP)")
+            xp_misiones += xp
         else:
             st.error(f"{nombre} ✖")
 
     st.subheader("💥 Bonus del día")
-    st.write(f"XP ganado por misiones: {xp_misiones}")
+    st.write(f"XP ganado: {xp_misiones}")
 
 # ===== HISTORIAL =====
 st.subheader("📋 Historial")
-st.dataframe(df.tail(10))
+
+ultimos = df.tail(10).sort_values("fecha", ascending=False)
+for _, row in ultimos.iterrows():
+    st.markdown("---")
+
+    st.markdown(f"### 📅 {row['fecha'].strftime('%Y-%m-%d')}")
+    
+    st.write(f"📚 Leer: {'✅' if row['leer'] else '❌'}")
+    st.write(f"🏋️ Gym: {'✅' if row['gym'] else '❌'}")
+    st.write(f"🧠 Aprendizaje: {'✅' if row['aprendizaje'] else '❌'}")
+    st.write(f"📱 Horas pantalla: {row['horas_pantalla']}")
+    st.write(f"😎 Estado mental: {row['estado_mental']}/10")
+    st.write(f"⚡ XP: {row['xp']}")
 
 # ===== LOGROS =====
 st.subheader("🏆 Logros")
@@ -212,4 +192,45 @@ for val in reversed(df["aprendizaje"]):
     else:
         st.info("Aún no desbloqueas logros… sigue avanzando 😈")
 
-conn.close()
+# ===== IA =====
+st.subheader("🧠 Análisis Inteligente")
+
+mensajes = []
+
+# ===== ANALISIS RECIENTE =====
+if len(df) >= 3:
+    ultimos = df.tail(3)
+
+    # 📱 Pantalla
+    if ultimos["horas_pantalla"].mean() > 6:
+        mensajes.append("📱 Estás usando demasiado el celular últimamente.")
+
+    # 🧠 Estado mental
+    if ultimos["estado_mental"].iloc[-1] < ultimos["estado_mental"].iloc[0]:
+        mensajes.append("⚠️ Tu estado mental va bajando.")
+
+    # 🏋️ Gym
+    if ultimos["gym"].sum() == 0:
+        mensajes.append("💀 No has ido al gym en varios días.")
+
+# ===== CORRELACIONES SIMPLES =====
+if df["gym"].sum() > 0:
+    gym_promedio = df[df["gym"] == 1]["estado_mental"].mean()
+    no_gym_promedio = df[df["gym"] == 0]["estado_mental"].mean()
+
+    if gym_promedio > no_gym_promedio:
+        mensajes.append("💡 Tu estado mental mejora cuando vas al gym.")
+
+# ===== DISCIPLINA GENERAL =====
+if df["leer"].mean() < 0.5:
+    mensajes.append("📚 Estás leyendo muy poco.")
+
+if df["aprendizaje"].mean() < 0.5:
+    mensajes.append("🧠 Estás aprendiendo poco.")
+
+# ===== MENSAJE FINAL =====
+if mensajes:
+    for m in mensajes:
+        st.warning(m)
+else:
+    st.success("🔥 Buen trabajo, mantienes buenos hábitos.")
