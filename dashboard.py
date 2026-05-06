@@ -43,17 +43,8 @@ with col_form:
             st.success("✅ Guardado en la nube")
 
 # ===== DATOS =====
-try:
-    response = supabase.table("progreso").select("*").execute()
-
-    st.write("DEBUG RESPONSE:")
-    st.write(response)
-
-    df = pd.DataFrame(response.data)
-
-except Exception as e:
-    st.error(f"ERROR REAL: {e}")
-    st.stop()
+response = supabase.table("progreso").select("*").execute()
+df = pd.DataFrame(response.data)
 
 if df.empty:
     st.warning("⚠️ Aún no tienes registros")
