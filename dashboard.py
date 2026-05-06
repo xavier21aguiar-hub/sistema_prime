@@ -116,6 +116,33 @@ with col_dash:
     st.subheader("💥 Bonus del día")
     st.write(f"XP ganado: {xp_misiones}")
 
+# ===== IA =====
+st.subheader("🧠 Análisis Inteligente")
+
+mensajes = []
+
+# ===== GRAFICAS =====
+st.subheader("📈 Estado Mental")
+
+chart_df = df.sort_values("fecha")
+
+st.line_chart(
+    chart_df.set_index("fecha")["estado_mental"]
+)
+
+st.subheader("⚡ Evolución XP")
+
+chart_df["xp_acumulado"] = chart_df["xp"].cumsum()
+
+st.area_chart(
+    chart_df.set_index("fecha")["xp_acumulado"]
+)
+
+st.subheader("📱 Pantalla vs Estado Mental")
+
+comparacion = chart_df[["horas_pantalla", "estado_mental"]]
+st.bar_chart(comparacion)
+
 # ===== HISTORIAL =====
 st.subheader("📋 Historial")
 
@@ -191,11 +218,6 @@ for val in reversed(df["aprendizaje"]):
             st.success(logro)
     else:
         st.info("Aún no desbloqueas logros… sigue avanzando 😈")
-
-# ===== IA =====
-st.subheader("🧠 Análisis Inteligente")
-
-mensajes = []
 
 # ===== ANALISIS RECIENTE =====
 if len(df) >= 3:
