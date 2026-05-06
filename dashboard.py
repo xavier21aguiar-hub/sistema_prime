@@ -31,14 +31,14 @@ with col_form:
         if submit:
             hoy = datetime.now().strftime("%Y-%m-%d")
 
-            supabase.table("progreso").insert({
+            supabase.table("progreso").upsert({
                 "fecha": hoy,
                 "leer": leer,
                 "gym": gym,
                 "aprendizaje": aprendizaje,
                 "horas_pantalla": horas,
                 "estado_mental": estado
-            }).execute()
+            }, on_conflict="fecha").execute()
 
             st.success("✅ Guardado en la nube")
 
