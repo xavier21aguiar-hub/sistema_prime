@@ -121,6 +121,44 @@ st.subheader("🧠 Análisis Inteligente")
 
 mensajes = []
 
+# ===== ANALISIS RECIENTE =====
+if len(df) >= 3:
+    ultimos = df.tail(3)
+
+    # 📱 Pantalla
+    if ultimos["horas_pantalla"].mean() > 6:
+        mensajes.append("📱 Estás usando demasiado el celular últimamente.")
+
+    # 🧠 Estado mental
+    if ultimos["estado_mental"].iloc[-1] < ultimos["estado_mental"].iloc[0]:
+        mensajes.append("⚠️ Tu estado mental va bajando.")
+
+    # 🏋️ Gym
+    if ultimos["gym"].sum() == 0:
+        mensajes.append("💀 No has ido al gym en varios días.")
+
+# ===== CORRELACIONES SIMPLES =====
+if df["gym"].sum() > 0:
+    gym_promedio = df[df["gym"] == 1]["estado_mental"].mean()
+    no_gym_promedio = df[df["gym"] == 0]["estado_mental"].mean()
+
+    if gym_promedio > no_gym_promedio:
+        mensajes.append("💡 Tu estado mental mejora cuando vas al gym.")
+
+# ===== DISCIPLINA GENERAL =====
+if df["leer"].mean() < 0.5:
+    mensajes.append("📚 Estás leyendo muy poco.")
+
+if df["aprendizaje"].mean() < 0.5:
+    mensajes.append("🧠 Estás aprendiendo poco.")
+
+# ===== MENSAJE FINAL =====
+if mensajes:
+    for m in mensajes:
+        st.warning(m)
+else:
+    st.success("🔥 Buen trabajo, mantienes buenos hábitos.")
+
 # ===== GRAFICAS =====
 st.subheader("📈 Estado Mental")
 
@@ -219,40 +257,4 @@ for val in reversed(df["aprendizaje"]):
     else:
         st.info("Aún no desbloqueas logros… sigue avanzando 😈")
 
-# ===== ANALISIS RECIENTE =====
-if len(df) >= 3:
-    ultimos = df.tail(3)
 
-    # 📱 Pantalla
-    if ultimos["horas_pantalla"].mean() > 6:
-        mensajes.append("📱 Estás usando demasiado el celular últimamente.")
-
-    # 🧠 Estado mental
-    if ultimos["estado_mental"].iloc[-1] < ultimos["estado_mental"].iloc[0]:
-        mensajes.append("⚠️ Tu estado mental va bajando.")
-
-    # 🏋️ Gym
-    if ultimos["gym"].sum() == 0:
-        mensajes.append("💀 No has ido al gym en varios días.")
-
-# ===== CORRELACIONES SIMPLES =====
-if df["gym"].sum() > 0:
-    gym_promedio = df[df["gym"] == 1]["estado_mental"].mean()
-    no_gym_promedio = df[df["gym"] == 0]["estado_mental"].mean()
-
-    if gym_promedio > no_gym_promedio:
-        mensajes.append("💡 Tu estado mental mejora cuando vas al gym.")
-
-# ===== DISCIPLINA GENERAL =====
-if df["leer"].mean() < 0.5:
-    mensajes.append("📚 Estás leyendo muy poco.")
-
-if df["aprendizaje"].mean() < 0.5:
-    mensajes.append("🧠 Estás aprendiendo poco.")
-
-# ===== MENSAJE FINAL =====
-if mensajes:
-    for m in mensajes:
-        st.warning(m)
-else:
-    st.success("🔥 Buen trabajo, mantienes buenos hábitos.")
