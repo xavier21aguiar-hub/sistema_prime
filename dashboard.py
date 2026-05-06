@@ -91,6 +91,31 @@ with col_dash:
     st.progress(xp_actual / 100)
     st.write(f"XP para siguiente nivel: {100 - xp_actual}")
 
+    # ===== MISIONES =====
+    st.subheader("🎯 Misiones del día")
+
+    ultimo = df.iloc[-1]
+
+    misiones = [
+        ("📚 Leer", ultimo["leer"], 10),
+        ("🏋️ Gym", ultimo["gym"], 20),
+        ("🧠 Aprender", ultimo["aprendizaje"], 15),
+        ("📵 Control pantalla", ultimo["horas_pantalla"] < 4, 10),
+        ("😎 Estado mental", ultimo["estado_mental"] >= 8, 10),
+    ]
+
+    xp_misiones = 0
+
+    for nombre, estado_m, xp in misiones:
+        if estado_m:
+            st.success(f"{nombre} ✔ (+{xp} XP)")
+            xp_misiones += xp
+        else:
+            st.error(f"{nombre} ✖")
+
+    st.subheader("💥 Bonus del día")
+    st.write(f"XP ganado: {xp_misiones}")
+
     # ===== OBJETIVOS SEMANALES =====
     st.subheader("🎯 Objetivos Semanales")
 
@@ -147,31 +172,6 @@ with col_dash:
 
     else:
         st.write(f"🔥 Bonus total: {bonus} XP")
-
-    # ===== MISIONES =====
-    st.subheader("🎯 Misiones del día")
-
-    ultimo = df.iloc[-1]
-
-    misiones = [
-        ("📚 Leer", ultimo["leer"], 10),
-        ("🏋️ Gym", ultimo["gym"], 20),
-        ("🧠 Aprender", ultimo["aprendizaje"], 15),
-        ("📵 Control pantalla", ultimo["horas_pantalla"] < 4, 10),
-        ("😎 Estado mental", ultimo["estado_mental"] >= 8, 10),
-    ]
-
-    xp_misiones = 0
-
-    for nombre, estado_m, xp in misiones:
-        if estado_m:
-            st.success(f"{nombre} ✔ (+{xp} XP)")
-            xp_misiones += xp
-        else:
-            st.error(f"{nombre} ✖")
-
-    st.subheader("💥 Bonus del día")
-    st.write(f"XP ganado: {xp_misiones}")
 
 
 # ===== IA =====
