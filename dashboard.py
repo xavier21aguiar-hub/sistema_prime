@@ -8,8 +8,8 @@ st.set_page_config(page_title="Sistema Prime", layout="centered")
 st.title("🔥 Sistema Prime")
 
 # ===== SUPABASE =====
-url = st.secrets["https://kdndotcakiuzjplzqfow.supabase.co/rest/v1/"]
-key = st.secrets["sb_publishable_4ZM3XEybYLT6xq65ll65Mg_0leE_GSW"]
+url = st.secrets["SUPABASE_URL"]
+key = st.secrets["SUPABASE_KEY"]
 supabase = create_client(url, key)
 
 # ===== LAYOUT PRINCIPAL =====
@@ -124,7 +124,7 @@ for _, row in ultimos.iterrows():
     st.markdown("---")
 
     st.markdown(f"### 📅 {row['fecha'].strftime('%Y-%m-%d')}")
-    
+
     st.write(f"📚 Leer: {'✅' if row['leer'] else '❌'}")
     st.write(f"🏋️ Gym: {'✅' if row['gym'] else '❌'}")
     st.write(f"🧠 Aprendizaje: {'✅' if row['aprendizaje'] else '❌'}")
